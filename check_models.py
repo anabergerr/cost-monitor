@@ -45,11 +45,22 @@ def modelos_validos(modelos, max_preco=MAX_PRECO):
     return validos
 
 
+def recomendar(validos):
+    if not validos:
+        return None
+    return {
+        "pesado": max(validos, key=lambda m: (m["inteligencia"], -m["preco"])),
+        "medio": max(validos, key=lambda m: m["score"]),
+        "de_boa": min(validos, key=lambda m: (m["preco"], -m["inteligencia"])),
+    }
+
+
 def ranquear(modelos, top_n=TOP_N, max_preco=MAX_PRECO):
     validos = modelos_validos(modelos, max_preco)
     return {
         "baratos": sorted(validos, key=lambda x: x["preco"])[:top_n],
         "custo_beneficio": sorted(validos, key=lambda x: x["score"], reverse=True)[:top_n],
+        "dica": recomendar(validos),
     }
 
 
@@ -92,41 +103,39 @@ def _esc(texto):
     return str(texto).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def _bloco(itens, detalhe):
+def _linha_dica(rotulo, modelo):
+    return (
+        f"{rotulo} → <b>{_esc(modelo['nome'])}</b>"
+        f"  <i>${modelo['preco']:.2f}/1M</i>"
+    )
+
+
+def _nomes(itens):
     if not itens:
-        return ["<i>Nenhum modelo hoje.</i>"]
-    linhas = []
-    for i, m in enumerate(itens, 1):
-        linhas.append(f"{i}. <b>{_esc(m['nome'])}</b>")
-        linhas.append(f"   {_esc(detalhe(m))}")
-    return linhas
+        return "<i>nenhum hoje</i>"
+    return " · ".join(
+        f"{_esc(m['nome'])} (${m['preco']:.2f})" for m in itens[:3]
+    )
 
 
 def formatar_ranking(dados):
     hoje = datetime.now(timezone(timedelta(hours=-3))).strftime("%d/%m/%Y")
-    linhas = [
-        "📊 <b>Monitor de IA</b>",
-        f"{_esc(hoje)} · preço por 1M tokens (blend 3:1)",
+    dica = dados.get("dica")
+    if not dica:
+        return f"<b>O que usar hoje</b> · {_esc(hoje)}\n\nNenhum modelo hoje."
+    return "\n".join([
+        f"<b>O que usar hoje</b> · {_esc(hoje)}",
         "",
-        "💸 <b>Mais baratas</b>",
-    ]
-    linhas.extend(_bloco(
-        dados["baratos"],
-        lambda m: f"${m['preco']:.2f}/1M  ·  inteligência {m['inteligencia']:.1f}",
-    ))
-    linhas.extend([
+        _linha_dica("Pesada, muito contexto", dica["pesado"]),
+        _linha_dica("Tarefa média", dica["medio"]),
+        _linha_dica("De boa", dica["de_boa"]),
         "",
-        "⚖️ <b>Melhor custo-benefício</b>",
-        "<i>inteligência ÷ preço</i>",
+        "<b>Mais baratas</b>",
+        _nomes(dados["baratos"]),
+        "",
+        "<b>Melhor custo-benefício</b>",
+        _nomes(dados["custo_beneficio"]),
     ])
-    linhas.extend(_bloco(
-        dados["custo_beneficio"],
-        lambda m: (
-            f"razão {m['score']:.1f}  ·  inteligência {m['inteligencia']:.1f}"
-            f"  ·  ${m['preco']:.2f}/1M"
-        ),
-    ))
-    return "\n".join(linhas)
 
 
 def enviar_telegram(texto):
@@ -181,11 +190,13 @@ def _self_check():
         },
     ])
     assert [m["nome"] for m in dados["baratos"]] == ["Superbarato", "Barato", "Caro"]
-    assert dados["custo_beneficio"][0]["nome"] in ("Barato", "Superbarato")
-    assert "Caro" not in [m["nome"] for m in dados["custo_beneficio"][:2]]
+    assert dados["dica"]["pesado"]["nome"] == "Barato"
+    assert dados["dica"]["de_boa"]["nome"] == "Superbarato"
+    assert dados["dica"]["medio"]["nome"] in ("Barato", "Superbarato")
     texto = formatar_ranking(dados)
+    assert "muito contexto" in texto
+    assert "De boa" in texto
     assert "Mais baratas" in texto
-    assert "Melhor custo-benefício" in texto
     old = os.environ.pop("TELEGRAM_BOT_TOKEN", None)
     try:
         try:
