@@ -36,13 +36,14 @@ def modelos_validos(modelos, max_preco=MAX_PRECO):
             continue
         if max_preco is not None and preco > max_preco:
             continue
-        coding = (m.get("evaluations") or {}).get(
-            "artificial_analysis_coding_index"
+        # AA retired coding_index (always null). Engineering is the closest live score.
+        engenharia = (m.get("evaluations") or {}).get(
+            "artificial_analysis_engineering_index"
         )
         validos.append({
             "nome": m.get("name", "Desconhecido"),
             "inteligencia": float(inteligencia),
-            "coding": float(coding) if coding else None,
+            "engenharia": float(engenharia) if engenharia else None,
             "preco": preco,
             "score": float(inteligencia) / preco,
         })
@@ -52,22 +53,22 @@ def modelos_validos(modelos, max_preco=MAX_PRECO):
 def recomendar(validos):
     if not validos:
         return None
-    com_codigo = [m for m in validos if m["coding"]]
-    pool = com_codigo or validos
+    com_eng = [m for m in validos if m["engenharia"]]
+    pool = com_eng or validos
     return {
-        "pesado": max(pool, key=lambda m: (m["coding"] or 0, m["inteligencia"], -m["preco"])),
-        "medio": max(pool, key=lambda m: ((m["coding"] or m["inteligencia"]) / m["preco"])),
-        "de_boa": min(validos, key=lambda m: (m["preco"], -(m["coding"] or 0), -m["inteligencia"])),
+        "pesado": max(pool, key=lambda m: (m["engenharia"] or 0, m["inteligencia"], -m["preco"])),
+        "medio": max(pool, key=lambda m: ((m["engenharia"] or m["inteligencia"]) / m["preco"])),
+        "de_boa": min(validos, key=lambda m: (m["preco"], -(m["engenharia"] or 0), -m["inteligencia"])),
     }
 
 
 def ranquear(modelos, top_n=TOP_N, max_preco=MAX_PRECO):
     validos = modelos_validos(modelos, max_preco)
-    com_codigo = [m for m in validos if m["coding"]]
+    com_eng = [m for m in validos if m["engenharia"]]
     return {
         "baratos": sorted(validos, key=lambda x: x["preco"])[:top_n],
         "custo_beneficio": sorted(validos, key=lambda x: x["score"], reverse=True)[:top_n],
-        "codigo": sorted(com_codigo, key=lambda x: x["coding"], reverse=True)[:top_n],
+        "codigo": sorted(com_eng, key=lambda x: x["engenharia"], reverse=True)[:top_n],
         "dica": recomendar(validos),
     }
 
@@ -112,9 +113,9 @@ def _esc(texto):
 
 
 def _metricas(modelo):
-    code = f"{modelo['coding']:.1f}" if modelo.get("coding") else "—"
+    eng = f"{modelo['engenharia']:.1f}" if modelo.get("engenharia") else "—"
     return (
-        f"intel {modelo['inteligencia']:.1f} · code {code} · "
+        f"intel {modelo['inteligencia']:.1f} · eng {eng} · "
         f"${modelo['preco']:.2f}/1M"
     )
 
@@ -152,8 +153,9 @@ def formatar_ranking(dados):
     linhas.extend(_bloco(dados["baratos"]))
     linhas.extend(["", "<b>Melhor custo-benefício</b>"])
     linhas.extend(_bloco(dados["custo_beneficio"]))
-    linhas.extend(["", "<b>Pra código</b>"])
-    linhas.extend(_bloco(dados.get("codigo") or []))
+    if dados.get("codigo"):
+        linhas.extend(["", "<b>Pra código</b> <i>(engenharia AA)</i>"])
+        linhas.extend(_bloco(dados["codigo"]))
     return "\n".join(linhas)
 
 
@@ -191,7 +193,7 @@ def _self_check():
             "name": "Caro",
             "evaluations": {
                 "artificial_analysis_intelligence_index": 50,
-                "artificial_analysis_coding_index": 80,
+                "artificial_analysis_engineering_index": 80,
             },
             "pricing": {"price_1m_input_tokens": 10, "price_1m_output_tokens": 10},
         },
@@ -199,7 +201,7 @@ def _self_check():
             "name": "Barato",
             "evaluations": {
                 "artificial_analysis_intelligence_index": 50,
-                "artificial_analysis_coding_index": 40,
+                "artificial_analysis_engineering_index": 40,
             },
             "pricing": {"price_1m_input_tokens": 1, "price_1m_output_tokens": 1},
         },
@@ -221,7 +223,7 @@ def _self_check():
     assert dados["dica"]["medio"]["nome"] == "Barato"
     texto = formatar_ranking(dados)
     assert "Pra código" in texto
-    assert "code 80.0" in texto
+    assert "eng 80.0" in texto
     assert "intel 50.0" in texto
     assert texto.count("1. ") >= 2
     old = os.environ.pop("TELEGRAM_BOT_TOKEN", None)
