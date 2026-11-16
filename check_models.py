@@ -106,16 +106,20 @@ def _esc(texto):
 def _linha_dica(rotulo, modelo):
     return (
         f"{rotulo} → <b>{_esc(modelo['nome'])}</b>"
-        f"  <i>${modelo['preco']:.2f}/1M</i>"
+        f"  <i>intel {modelo['inteligencia']:.1f} · ${modelo['preco']:.2f}/1M</i>"
     )
 
 
-def _nomes(itens):
+def _bloco(itens):
     if not itens:
-        return "<i>nenhum hoje</i>"
-    return " · ".join(
-        f"{_esc(m['nome'])} (${m['preco']:.2f})" for m in itens[:3]
-    )
+        return ["<i>nenhum hoje</i>"]
+    linhas = []
+    for i, m in enumerate(itens, 1):
+        linhas.append(
+            f"{i}. <b>{_esc(m['nome'])}</b>"
+            f"  ·  intel {m['inteligencia']:.1f}  ·  ${m['preco']:.2f}/1M"
+        )
+    return linhas
 
 
 def formatar_ranking(dados):
@@ -123,7 +127,7 @@ def formatar_ranking(dados):
     dica = dados.get("dica")
     if not dica:
         return f"<b>O que usar hoje</b> · {_esc(hoje)}\n\nNenhum modelo hoje."
-    return "\n".join([
+    linhas = [
         f"<b>O que usar hoje</b> · {_esc(hoje)}",
         "",
         _linha_dica("Pesada, muito contexto", dica["pesado"]),
@@ -131,11 +135,11 @@ def formatar_ranking(dados):
         _linha_dica("De boa", dica["de_boa"]),
         "",
         "<b>Mais baratas</b>",
-        _nomes(dados["baratos"]),
-        "",
-        "<b>Melhor custo-benefício</b>",
-        _nomes(dados["custo_beneficio"]),
-    ])
+    ]
+    linhas.extend(_bloco(dados["baratos"]))
+    linhas.extend(["", "<b>Melhor custo-benefício</b>"])
+    linhas.extend(_bloco(dados["custo_beneficio"]))
+    return "\n".join(linhas)
 
 
 def enviar_telegram(texto):
@@ -196,7 +200,8 @@ def _self_check():
     texto = formatar_ranking(dados)
     assert "muito contexto" in texto
     assert "De boa" in texto
-    assert "Mais baratas" in texto
+    assert "intel 50.0" in texto
+    assert texto.count("1. ") >= 2
     old = os.environ.pop("TELEGRAM_BOT_TOKEN", None)
     try:
         try:
