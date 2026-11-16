@@ -4,6 +4,7 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import datetime, timedelta, timezone
 
 API_KEY = os.getenv("ARTIFICIAL_ANALYSIS_API_KEY")
 URL = "https://artificialanalysis.ai/api/v2/language/models/free"
@@ -24,7 +25,7 @@ def preco_blended(pricing):
     return (3 * float(inp) + float(out)) / 4
 
 
-def ranquear(modelos, top_n=TOP_N, max_preco=MAX_PRECO):
+def modelos_validos(modelos, max_preco=MAX_PRECO):
     validos = []
     for m in modelos:
         inteligencia = (m.get("evaluations") or {}).get(
@@ -41,8 +42,15 @@ def ranquear(modelos, top_n=TOP_N, max_preco=MAX_PRECO):
             "preco": preco,
             "score": float(inteligencia) / preco,
         })
-    ranking = sorted(validos, key=lambda x: x["score"], reverse=True)
-    return ranking[:top_n]
+    return validos
+
+
+def ranquear(modelos, top_n=TOP_N, max_preco=MAX_PRECO):
+    validos = modelos_validos(modelos, max_preco)
+    return {
+        "baratos": sorted(validos, key=lambda x: x["preco"])[:top_n],
+        "custo_beneficio": sorted(validos, key=lambda x: x["score"], reverse=True)[:top_n],
+    }
 
 
 def buscar_pagina(page):
@@ -80,23 +88,59 @@ def buscar_melhores_modelos():
     return ranquear(buscar_modelos())
 
 
-def formatar_ranking(top):
-    linhas = ["Top modelos de IA por custo-benefício hoje:"]
-    for i, m in enumerate(top, 1):
-        linhas.append(
-            f"{i}. {m['nome']} - Inteligência: {m['inteligencia']:.1f} | "
-            f"Preço: ${m['preco']:.2f}/1M | Razão: {m['score']:.2f}"
-        )
+def _esc(texto):
+    return str(texto).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def _bloco(itens, detalhe):
+    if not itens:
+        return ["<i>Nenhum modelo hoje.</i>"]
+    linhas = []
+    for i, m in enumerate(itens, 1):
+        linhas.append(f"{i}. <b>{_esc(m['nome'])}</b>")
+        linhas.append(f"   {_esc(detalhe(m))}")
+    return linhas
+
+
+def formatar_ranking(dados):
+    hoje = datetime.now(timezone(timedelta(hours=-3))).strftime("%d/%m/%Y")
+    linhas = [
+        "📊 <b>Monitor de IA</b>",
+        f"{_esc(hoje)} · preço por 1M tokens (blend 3:1)",
+        "",
+        "💸 <b>Mais baratas</b>",
+    ]
+    linhas.extend(_bloco(
+        dados["baratos"],
+        lambda m: f"${m['preco']:.2f}/1M  ·  inteligência {m['inteligencia']:.1f}",
+    ))
+    linhas.extend([
+        "",
+        "⚖️ <b>Melhor custo-benefício</b>",
+        "<i>inteligência ÷ preço</i>",
+    ])
+    linhas.extend(_bloco(
+        dados["custo_beneficio"],
+        lambda m: (
+            f"razão {m['score']:.1f}  ·  inteligência {m['inteligencia']:.1f}"
+            f"  ·  ${m['preco']:.2f}/1M"
+        ),
+    ))
     return "\n".join(linhas)
 
 
 def enviar_telegram(texto):
-    token = os.getenv("TELEGRAM_BOT_TOKEN")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    token = (os.getenv("TELEGRAM_BOT_TOKEN") or "").strip()
+    chat_id = (os.getenv("TELEGRAM_CHAT_ID") or "").strip()
     if not token or not chat_id:
         raise ValueError("Defina TELEGRAM_BOT_TOKEN e TELEGRAM_CHAT_ID.")
     url = f"https://api.telegram.org/bot{token}/sendMessage"
-    body = urllib.parse.urlencode({"chat_id": chat_id, "text": texto}).encode()
+    body = urllib.parse.urlencode({
+        "chat_id": chat_id,
+        "text": texto,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": "true",
+    }).encode()
     req = urllib.request.Request(url, data=body, method="POST")
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
@@ -114,7 +158,7 @@ def _self_check():
         "price_1m_output_tokens": 4.4,
     }) - 2.15) < 1e-9
     assert preco_blended({"price_1m_blended_3_to_1": 2.15}) == 2.15
-    ranking = ranquear([
+    dados = ranquear([
         {
             "name": "Caro",
             "evaluations": {"artificial_analysis_intelligence_index": 50},
@@ -130,8 +174,18 @@ def _self_check():
             "evaluations": {"artificial_analysis_intelligence_index": 99},
             "pricing": {"price_1m_input_tokens": 0, "price_1m_output_tokens": 0},
         },
+        {
+            "name": "Superbarato",
+            "evaluations": {"artificial_analysis_intelligence_index": 5},
+            "pricing": {"price_1m_input_tokens": 0.1, "price_1m_output_tokens": 0.1},
+        },
     ])
-    assert [m["nome"] for m in ranking] == ["Barato", "Caro"]
+    assert [m["nome"] for m in dados["baratos"]] == ["Superbarato", "Barato", "Caro"]
+    assert dados["custo_beneficio"][0]["nome"] in ("Barato", "Superbarato")
+    assert "Caro" not in [m["nome"] for m in dados["custo_beneficio"][:2]]
+    texto = formatar_ranking(dados)
+    assert "Mais baratas" in texto
+    assert "Melhor custo-benefício" in texto
     old = os.environ.pop("TELEGRAM_BOT_TOKEN", None)
     try:
         try:
