@@ -1,8 +1,6 @@
 name: Monitor Diario de IA
 
 on:
-  schedule:
-    - cron: "0 11 * * *"  # 08:00 Brasília (UTC-3)
   workflow_dispatch:
 
 jobs:
