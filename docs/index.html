@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>O que usar hoje pra código</title>
+<style>
+:root {
+  --bg: #f3f5f0;
+  --ink: #1c2418;
+  --muted: #5e6a57;
+  --card: #fff;
+  --line: #d5ddd0;
+  --green: #2c6a3c;
+  --green-bg: #e7f3e6;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font: 16px/1.45 system-ui, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+main { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+.kicker {
+  color: var(--green);
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  font-size: .78rem;
+  margin: 0 0 .35rem;
+}
+h1 { font-size: 1.8rem; margin: 0 0 .4rem; }
+.meta { color: var(--muted); margin: 0 0 1.75rem; }
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: .9rem;
+  margin-bottom: 2.2rem;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1rem 1.05rem 1.1rem;
+}
+.card .emoji { font-size: 1.25rem; margin: 0 0 .3rem; }
+.card h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 .15rem;
+}
+.card .quando {
+  font-size: .8rem;
+  color: var(--muted);
+  margin: 0 0 .7rem;
+}
+.card .nome { font-size: 1.05rem; font-weight: 700; margin: 0 0 .8rem; }
+dl {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: .4rem;
+  margin: 0;
+}
+dt {
+  font-size: .7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+h2.lista { font-size: 1.1rem; margin: 1.8rem 0 .3rem; }
+.sublista { color: var(--muted); font-size: .85rem; margin: 0 0 .8rem; }
+.tabela {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th, td {
+  text-align: left;
+  padding: .7rem .85rem;
+  border-bottom: 1px solid var(--line);
+  font-variant-numeric: tabular-nums;
+}
+th {
+  font-size: .75rem;
+  color: var(--muted);
+  font-weight: 600;
+  background: #f7faf5;
+}
+tr:last-child td { border-bottom: 0; }
+.badge {
+  display: inline-block;
+  margin-left: .35rem;
+  padding: .1rem .45rem;
+  border-radius: 999px;
+  background: var(--green-bg);
+  color: var(--green);
+  font-size: .7rem;
+  font-weight: 600;
+}
+.vazio { color: var(--muted); }
+.como {
+  margin-top: 2.4rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--line);
+}
+.como h2 { font-size: 1.1rem; margin: 0 0 .85rem; }
+.como h3 { font-size: .95rem; margin: 1.15rem 0 .3rem; }
+.como p, .como li { font-size: .92rem; margin: 0 0 .55rem; }
+.como ul { margin: 0 0 .55rem; padding-left: 1.15rem; }
+.como a { color: var(--green); }
+footer { margin-top: 2rem; color: var(--muted); font-size: .85rem; }
+footer a { color: var(--green); }
+</style>
+</head>
+<body>
+<main>
+<p class="kicker">Pra quem escreve código</p>
+<h1>O que usar hoje</h1>
+<p class="meta">20/11/2026 · quadrante verde · intel ≥ 35 · até $2.12/tarefa</p>
+<section class="cards"><article class="card"><p class="emoji">💪</p><h2>Tarefa complexa</h2><p class="quando">Arquitetura, bug difícil, refactor grande</p><p class="nome">Sol</p><dl><div><dt>Intel</dt><dd>57.0</dd></div><div><dt>Eng</dt><dd>80.0</dd></div><div><dt>Custo</dt><dd>$1.00/tarefa</dd></div></dl></article><article class="card"><p class="emoji">⚖️</p><h2>Tarefa média</h2><p class="quando">Feature, review, PR do dia</p><p class="nome">Terra</p><dl><div><dt>Intel</dt><dd>51.0</dd></div><div><dt>Eng</dt><dd>70.0</dd></div><div><dt>Custo</dt><dd>$0.96/tarefa</dd></div></dl></article><article class="card"><p class="emoji">🌱</p><h2>Tarefa simples</h2><p class="quando">Script, boilerplate, ajuste rápido</p><p class="nome">Ember</p><dl><div><dt>Intel</dt><dd>36.0</dd></div><div><dt>Eng</dt><dd>40.0</dd></div><div><dt>Custo</dt><dd>$0.15/tarefa</dd></div></dl></article></section><h2 class="lista">No verde</h2><p class="sublista">Inteligente e barato o bastante pra ser o default.</p><div class="tabela"><table><thead><tr><th>#</th><th>Modelo</th><th>Intel</th><th>Eng</th><th>Custo</th></tr></thead><tbody><tr><td>1</td><td>Sol <span class="badge">fronteira</span></td><td>57.0</td><td>80.0</td><td>$1.00/tarefa</td></tr><tr><td>2</td><td>Terra <span class="badge">fronteira</span></td><td>51.0</td><td>70.0</td><td>$0.96/tarefa</td></tr><tr><td>3</td><td>Haiku <span class="badge">fronteira</span></td><td>38.0</td><td>50.0</td><td>$0.45/tarefa</td></tr><tr><td>4</td><td>Ember <span class="badge">fronteira</span></td><td>36.0</td><td>40.0</td><td>$0.15/tarefa</td></tr></tbody></table></div><h2 class="lista">Caros, mas vale</h2><p class="sublista">Top 3 da fronteira à direita: paga mais, ganha inteligência.</p><div class="tabela"><table><thead><tr><th>#</th><th>Modelo</th><th>Intel</th><th>Eng</th><th>Custo</th></tr></thead><tbody><tr><td>1</td><td>Fable <span class="badge">fronteira</span></td><td>64.0</td><td>90.0</td><td>$30.00/tarefa</td></tr><tr><td>2</td><td>Astra <span class="badge">fronteira</span></td><td>62.0</td><td>85.0</td><td>$4.00/tarefa</td></tr></tbody></table></div><h2 class="lista">Caros, nem pensar</h2><p class="sublista">Paga mais e não sobe na fronteira. Esquece.</p><div class="tabela"><table><thead><tr><th>#</th><th>Modelo</th><th>Intel</th><th>Eng</th><th>Custo</th></tr></thead><tbody><tr><td>1</td><td>Hydrogen</td><td>54.0</td><td>75.0</td><td>$3.20/tarefa</td></tr></tbody></table></div>
+<section class="como"><h2>Como isso é determinado</h2><h3>De onde vêm os dados</h3><p>Nada aqui é chute. Os números vêm da API do <a href="https://artificialanalysis.ai">Artificial Analysis</a>, que roda as mesmas provas em vários modelos e publica:</p><ul><li><b>Intel</b> — Intelligence Index, capacidade geral.</li><li><b>Eng</b> — Engineering Index, o recorte de código.</li><li><b>Custo</b> — USD pra rodar a prova de inteligência (cost per task), não o preço por milhão de tokens.</li></ul><p>Este site só baixa isso de manhã, recorta e escolhe as faixas.</p><h3>O quadrante verde</h3><p>É a mesma ideia do gráfico do AA: inteligente o bastante e barato o bastante. A metade de cima do eixo de inteligência e a metade esquerda do eixo de custo (em escala log). Hoje isso deu intel ≥ 35 e até $2.12/tarefa. Modelo caro demais ou fraco demais fica de fora. Quem está na <b>fronteira</b> é o que ninguém no verde supera em inteligência pagando menos.</p><h3>Simples, média e complexa</h3><p>As três dicas saem da fronteira, pensadas pra código:</p><ul><li><b>Tarefa complexa</b> — o mais inteligente que ainda cabe no verde (arquitetura, bug difícil, refactor grande).</li><li><b>Tarefa média</b> — o próximo dessa lista (feature, review, PR do dia).</li><li><b>Tarefa simples</b> — o mais barato que ainda presta (script, boilerplate, ajuste rápido).</li></ul><p>Se o maior Engineering Index do verde for outro modelo, ele aparece à parte como melhor em engenharia.</p><h3>Fora do verde</h3><p><b>Caros, mas vale</b> são os da fronteira à direita: paga mais e ganha inteligência de verdade. Top 3.</p><p><b>Caros, nem pensar</b> custam acima do corte e nem estão na fronteira — existe opção mais barata pelo menos tão inteligente. Os piores negócios do dia.</p></section>
+<footer>Fonte: <a href="https://artificialanalysis.ai">Artificial Analysis</a> · atualizado automaticamente</footer>
+</main>
+</body>
+</html>
