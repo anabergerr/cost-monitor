@@ -13,6 +13,32 @@
   --line: #d5ddd0;
   --green: #2c6a3c;
   --green-bg: #e7f3e6;
+  --head: #f7faf5;
+  color-scheme: light;
+}
+html[data-theme="dark"] {
+  --bg: #141812;
+  --ink: #e7eee4;
+  --muted: #9aa892;
+  --card: #1c2219;
+  --line: #323b2e;
+  --green: #8dcb96;
+  --green-bg: #243528;
+  --head: #191f17;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141812;
+    --ink: #e7eee4;
+    --muted: #9aa892;
+    --card: #1c2219;
+    --line: #323b2e;
+    --green: #8dcb96;
+    --green-bg: #243528;
+    --head: #191f17;
+    color-scheme: dark;
+  }
 }
 * { box-sizing: border-box; }
 body {
@@ -22,13 +48,30 @@ body {
   color: var(--ink);
 }
 main { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+.topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 .35rem;
+}
 .kicker {
   color: var(--green);
   font-weight: 600;
   letter-spacing: .04em;
   text-transform: uppercase;
   font-size: .78rem;
-  margin: 0 0 .35rem;
+  margin: 0;
+}
+.tema {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: .25rem .7rem;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.2;
 }
 h1 { font-size: 1.8rem; margin: 0 0 .4rem; }
 .meta { color: var(--muted); margin: 0 0 1.75rem; }
@@ -91,7 +134,7 @@ th {
   font-size: .75rem;
   color: var(--muted);
   font-weight: 600;
-  background: #f7faf5;
+  background: var(--head);
 }
 tr:last-child td { border-bottom: 0; }
 .badge {
@@ -119,10 +162,35 @@ footer { margin-top: 2rem; color: var(--muted); font-size: .85rem; }
 footer a { color: var(--green); }
 footer .amor { margin: .45rem 0 0; }
 </style>
+<script>
+(function(){
+  var k='tema';
+  function sys(){
+    return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  function get(){ return localStorage.getItem(k) || sys(); }
+  function set(t){
+    document.documentElement.setAttribute('data-theme', t);
+    var b=document.getElementById('tema');
+    if (b) b.textContent = t === 'dark' ? '☀' : '☾';
+  }
+  set(get());
+  document.addEventListener('DOMContentLoaded', function(){
+    set(get());
+    var b=document.getElementById('tema');
+    if (!b) return;
+    b.onclick=function(){
+      var t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+      localStorage.setItem(k,t);
+      set(t);
+    };
+  });
+})();
+</script>
 </head>
 <body>
 <main>
-<p class="kicker">Pra quem escreve código</p>
+<div class="topo"><p class="kicker">Pra quem escreve código</p><button type="button" id="tema" class="tema" aria-label="Alternar tema">☾</button></div>
 <h1>O que usar hoje</h1>
 <p class="meta">20/11/2026 · quadrante verde · intel ≥ 35 · até $2.12/tarefa</p>
 <section class="cards"><article class="card"><p class="emoji">💪</p><h2>Tarefa complexa</h2><p class="quando">Arquitetura, bug difícil, refactor grande</p><p class="nome">Sol</p><dl><div><dt>Intel</dt><dd>57.0</dd></div><div><dt>Eng</dt><dd>80.0</dd></div><div><dt>Custo</dt><dd>$1.00/tarefa</dd></div></dl></article><article class="card"><p class="emoji">⚖️</p><h2>Tarefa média</h2><p class="quando">Feature, review, PR do dia</p><p class="nome">Terra</p><dl><div><dt>Intel</dt><dd>51.0</dd></div><div><dt>Eng</dt><dd>70.0</dd></div><div><dt>Custo</dt><dd>$0.96/tarefa</dd></div></dl></article><article class="card"><p class="emoji">🌱</p><h2>Tarefa simples</h2><p class="quando">Script, boilerplate, ajuste rápido</p><p class="nome">Ember</p><dl><div><dt>Intel</dt><dd>36.0</dd></div><div><dt>Eng</dt><dd>40.0</dd></div><div><dt>Custo</dt><dd>$0.15/tarefa</dd></div></dl></article></section><h2 class="lista">No verde</h2><p class="sublista">Inteligente e barato o bastante pra ser o default.</p><div class="tabela"><table><thead><tr><th>#</th><th>Modelo</th><th>Intel</th><th>Eng</th><th>Custo</th></tr></thead><tbody><tr><td>1</td><td>Sol <span class="badge">fronteira</span></td><td>57.0</td><td>80.0</td><td>$1.00/tarefa</td></tr><tr><td>2</td><td>Terra <span class="badge">fronteira</span></td><td>51.0</td><td>70.0</td><td>$0.96/tarefa</td></tr><tr><td>3</td><td>Haiku <span class="badge">fronteira</span></td><td>38.0</td><td>50.0</td><td>$0.45/tarefa</td></tr><tr><td>4</td><td>Ember <span class="badge">fronteira</span></td><td>36.0</td><td>40.0</td><td>$0.15/tarefa</td></tr></tbody></table></div><h2 class="lista">Caros, mas vale</h2><p class="sublista">Top 3 da fronteira à direita: paga mais, ganha inteligência.</p><div class="tabela"><table><thead><tr><th>#</th><th>Modelo</th><th>Intel</th><th>Eng</th><th>Custo</th></tr></thead><tbody><tr><td>1</td><td>Fable <span class="badge">fronteira</span></td><td>64.0</td><td>90.0</td><td>$30.00/tarefa</td></tr><tr><td>2</td><td>Astra <span class="badge">fronteira</span></td><td>62.0</td><td>85.0</td><td>$4.00/tarefa</td></tr></tbody></table></div><h2 class="lista">Caros, nem pensar</h2><p class="sublista">Paga mais e não sobe na fronteira. Esquece.</p><div class="tabela"><table><thead><tr><th>#</th><th>Modelo</th><th>Intel</th><th>Eng</th><th>Custo</th></tr></thead><tbody><tr><td>1</td><td>Hydrogen</td><td>54.0</td><td>75.0</td><td>$3.20/tarefa</td></tr></tbody></table></div>

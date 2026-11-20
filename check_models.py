@@ -310,6 +310,32 @@ _CSS = """
   --line: #d5ddd0;
   --green: #2c6a3c;
   --green-bg: #e7f3e6;
+  --head: #f7faf5;
+  color-scheme: light;
+}
+html[data-theme="dark"] {
+  --bg: #141812;
+  --ink: #e7eee4;
+  --muted: #9aa892;
+  --card: #1c2219;
+  --line: #323b2e;
+  --green: #8dcb96;
+  --green-bg: #243528;
+  --head: #191f17;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141812;
+    --ink: #e7eee4;
+    --muted: #9aa892;
+    --card: #1c2219;
+    --line: #323b2e;
+    --green: #8dcb96;
+    --green-bg: #243528;
+    --head: #191f17;
+    color-scheme: dark;
+  }
 }
 * { box-sizing: border-box; }
 body {
@@ -319,13 +345,30 @@ body {
   color: var(--ink);
 }
 main { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+.topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 .35rem;
+}
 .kicker {
   color: var(--green);
   font-weight: 600;
   letter-spacing: .04em;
   text-transform: uppercase;
   font-size: .78rem;
-  margin: 0 0 .35rem;
+  margin: 0;
+}
+.tema {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: .25rem .7rem;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.2;
 }
 h1 { font-size: 1.8rem; margin: 0 0 .4rem; }
 .meta { color: var(--muted); margin: 0 0 1.75rem; }
@@ -388,7 +431,7 @@ th {
   font-size: .75rem;
   color: var(--muted);
   font-weight: 600;
-  background: #f7faf5;
+  background: var(--head);
 }
 tr:last-child td { border-bottom: 0; }
 .badge {
@@ -415,6 +458,32 @@ tr:last-child td { border-bottom: 0; }
 footer { margin-top: 2rem; color: var(--muted); font-size: .85rem; }
 footer a { color: var(--green); }
 footer .amor { margin: .45rem 0 0; }
+"""
+
+_TEMA_JS = """
+(function(){
+  var k='tema';
+  function sys(){
+    return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  function get(){ return localStorage.getItem(k) || sys(); }
+  function set(t){
+    document.documentElement.setAttribute('data-theme', t);
+    var b=document.getElementById('tema');
+    if (b) b.textContent = t === 'dark' ? '☀' : '☾';
+  }
+  set(get());
+  document.addEventListener('DOMContentLoaded', function(){
+    set(get());
+    var b=document.getElementById('tema');
+    if (!b) return;
+    b.onclick=function(){
+      var t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+      localStorage.setItem(k,t);
+      set(t);
+    };
+  });
+})();
 """
 
 
@@ -570,8 +639,12 @@ def formatar_html(dados):
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         "<title>O que usar hoje pra código</title>\n"
         f"<style>{_CSS}</style>\n"
+        f"<script>{_TEMA_JS}</script>\n"
         "</head>\n<body>\n<main>\n"
-        '<p class="kicker">Pra quem escreve código</p>\n'
+        '<div class="topo">'
+        '<p class="kicker">Pra quem escreve código</p>'
+        '<button type="button" id="tema" class="tema" aria-label="Alternar tema">☾</button>'
+        "</div>\n"
         "<h1>O que usar hoje</h1>\n"
         f'<p class="meta">{meta}</p>\n'
         f"{corpo}\n"
@@ -701,6 +774,9 @@ def _self_check():
     assert "nenhum modelo no quadrante verde" in formatar_html({"dica": None})
     assert "Como isso é determinado" in html
     assert "feito com amor por Ana Laura e Cursor" in html
+    assert 'id="tema"' in html
+    assert "prefers-color-scheme: dark" in html
+    assert "data-theme" in html
     assert "Intelligence Index" in html
     assert "Engineering Index" in html
     assert "cost per task" in html
