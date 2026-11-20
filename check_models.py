@@ -414,6 +414,7 @@ tr:last-child td { border-bottom: 0; }
 .como a { color: var(--green); }
 footer { margin-top: 2rem; color: var(--muted); font-size: .85rem; }
 footer a { color: var(--green); }
+footer .amor { margin: .45rem 0 0; }
 """
 
 
@@ -577,7 +578,9 @@ def formatar_html(dados):
         f"{_como_funciona(dados)}\n"
         "<footer>Fonte: "
         '<a href="https://artificialanalysis.ai">Artificial Analysis</a>'
-        " · atualizado automaticamente</footer>\n"
+        " · atualizado automaticamente"
+        '<p class="amor">feito com amor por Ana Laura e Cursor ♥</p>'
+        "</footer>\n"
         "</main>\n</body>\n</html>\n"
     )
 
@@ -697,6 +700,7 @@ def _self_check():
     assert "$1.00/tarefa" in html
     assert "nenhum modelo no quadrante verde" in formatar_html({"dica": None})
     assert "Como isso é determinado" in html
+    assert "feito com amor por Ana Laura e Cursor" in html
     assert "Intelligence Index" in html
     assert "Engineering Index" in html
     assert "cost per task" in html
