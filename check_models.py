@@ -170,8 +170,10 @@ def buscar_pagina(page):
         with urllib.request.urlopen(req, timeout=30) as resp:
             return json.load(resp)
     except urllib.error.HTTPError as exc:
-        body = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"API {exc.code}: {body}") from exc
+        body = _redact(exc.read().decode("utf-8", errors="replace"))
+        raise RuntimeError(f"API {exc.code}: {body}") from None
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"API falhou: {_redact(exc.reason)}") from None
 
 
 def buscar_modelos():
@@ -197,6 +199,24 @@ def buscar_melhores_modelos():
 
 def _esc(texto):
     return str(texto).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def _segredos():
+    return [
+        s for s in (
+            API_KEY,
+            os.getenv("ARTIFICIAL_ANALYSIS_API_KEY"),
+            os.getenv("TELEGRAM_BOT_TOKEN"),
+            os.getenv("TELEGRAM_CHAT_ID"),
+        ) if s
+    ]
+
+
+def _redact(texto):
+    out = str(texto)
+    for s in _segredos():
+        out = out.replace(s, "***")
+    return out
 
 
 def _fmt_custo(custo):
@@ -590,10 +610,12 @@ def enviar_telegram(texto):
         with urllib.request.urlopen(req, timeout=30) as resp:
             payload = json.load(resp)
     except urllib.error.HTTPError as exc:
-        err = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"Telegram {exc.code}: {err}") from exc
+        err = _redact(exc.read().decode("utf-8", errors="replace"))
+        raise RuntimeError(f"Telegram {exc.code}: {err}") from None
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"Telegram falhou: {_redact(exc.reason)}") from None
     if not payload.get("ok"):
-        raise RuntimeError(f"Telegram recusou: {payload}")
+        raise RuntimeError(f"Telegram recusou: {_redact(payload)}") from None
 
 
 def _modelo(nome, intel, custo, eng=None):
@@ -688,16 +710,29 @@ def _self_check():
     ])
     assert outro["dica"]["codigo"]["nome"] == "Codex"
     assert "Melhor em engenharia" in formatar_ranking(outro)
-    old = os.environ.pop("TELEGRAM_BOT_TOKEN", None)
+    old_token = os.environ.pop("TELEGRAM_BOT_TOKEN", None)
+    old_chat = os.environ.pop("TELEGRAM_CHAT_ID", None)
     try:
+        os.environ["TELEGRAM_BOT_TOKEN"] = "tok_test_xyz"
+        os.environ["TELEGRAM_CHAT_ID"] = "chat_test_xyz"
+        assert "tok_test_xyz" not in _redact("erro tok_test_xyz chat_test_xyz")
+        assert "***" in _redact("erro tok_test_xyz")
+        os.environ.pop("TELEGRAM_BOT_TOKEN", None)
+        os.environ.pop("TELEGRAM_CHAT_ID", None)
         try:
             enviar_telegram("x")
             raise AssertionError("esperava erro sem token")
         except ValueError:
             pass
     finally:
-        if old is not None:
-            os.environ["TELEGRAM_BOT_TOKEN"] = old
+        if old_token is None:
+            os.environ.pop("TELEGRAM_BOT_TOKEN", None)
+        else:
+            os.environ["TELEGRAM_BOT_TOKEN"] = old_token
+        if old_chat is None:
+            os.environ.pop("TELEGRAM_CHAT_ID", None)
+        else:
+            os.environ["TELEGRAM_CHAT_ID"] = old_chat
     print("self-check ok")
 
 
